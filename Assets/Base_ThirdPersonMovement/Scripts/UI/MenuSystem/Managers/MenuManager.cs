@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MenuManager : MonoBehaviour
 {
@@ -19,7 +20,6 @@ public class MenuManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
             InitializeMenus();
         }
         else
@@ -33,6 +33,8 @@ public class MenuManager : MonoBehaviour
         // Subscribe to events
         EventManager.StartListening("MenuBack", OnBackInput);
         EventManager.StartListening("MenuPauseToggle", OnPauseToggleInput);
+        SceneManager.sceneLoaded += (_, _) => InitializeMenus();
+
     }
 
     private void OnDestroy()
@@ -40,17 +42,35 @@ public class MenuManager : MonoBehaviour
         // Unsubscribe from events
         EventManager.StopListening("MenuBack", OnBackInput);
         EventManager.StopListening("MenuPauseToggle", OnPauseToggleInput);
+        SceneManager.sceneLoaded -= (_, _) => InitializeMenus();
+
     }
 
     private void InitializeMenus()
     {
-        // Register all menus
+        // 1) Always refresh the registry on each Init (protects against remnant entries):
+        menuRegistry.Clear();
+
+        // 2) Discover every BaseMenu in the scene (including inactive!):
+        var discovered = FindObjectsOfType<BaseMenu>(true);
+
+        // 3) (Re)build your allMenus list:
+        allMenus = new List<BaseMenu>(discovered);
+
         foreach (var menu in allMenus)
         {
+            // 4) Guard against duplicate IDs:
+            if (menuRegistry.ContainsKey(menu.MenuId))
+            {
+                Debug.LogWarning($"[MenuManager] Duplicate MenuId '{menu.MenuId}' on {menu.gameObject.name}");
+                continue;
+            }
+
             menuRegistry[menu.MenuId] = menu;
-            menu.Hide(); // Start with all menus hidden
+            menu.Hide();
         }
     }
+
 
     private void OnBackInput()
     {
