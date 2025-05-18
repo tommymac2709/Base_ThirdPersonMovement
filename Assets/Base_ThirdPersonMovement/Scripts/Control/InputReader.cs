@@ -33,16 +33,13 @@ public class InputReader : MonoBehaviour, Controls.IPlayerActions, Controls.IUIA
         controls.Player.Enable();
         controls.UI.Enable();
 
-        // Subscribe to UI window events to disable/enable controls as needed.
-        WindowController.OnAnyWindowOpened += DisableControls;
-        WindowController.OnAllWindowsClosed += EnableControls;
+        
     }
 
     private void OnDestroy()
     {
         // Clean up event subscriptions and ensure controls are disabled.
-        WindowController.OnAnyWindowOpened -= DisableControls;
-        WindowController.OnAllWindowsClosed -= EnableControls;
+ 
         controls.Player.Disable();
         controls.UI.Disable();
     }
