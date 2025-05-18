@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 public class PauseMenu : BaseMenu
 {
@@ -10,6 +9,14 @@ public class PauseMenu : BaseMenu
 
     protected override void Awake()
     {
+        // Explicitly set the menu ID to ensure it matches
+        menuId = "PauseMenu";
+
+        // Configure menu properties
+        menuType = MenuType.Additive;  // Pause menu goes on stack
+        shouldPauseGame = true;         // Pause the game when shown
+        handlesOwnInput = false;        // Use default input handling
+
         base.Awake();
         SetupButtons();
     }
@@ -19,6 +26,9 @@ public class PauseMenu : BaseMenu
         resumeButton.onClick.AddListener(OnResumeClicked);
         optionsButton.onClick.AddListener(OnOptionsClicked);
         quitButton.onClick.AddListener(OnQuitClicked);
+
+        // Set default selection for gamepad navigation
+        defaultSelection = resumeButton;
     }
 
     private void OnResumeClicked()
@@ -36,28 +46,17 @@ public class PauseMenu : BaseMenu
         MenuManager.Instance.QuitGame();
     }
 
-   
-
-    public override void OnMenuOpened()
+    // Optional: Custom input handling example
+    public override void OnMenuSpecificInput(string actionName)
     {
-        // Pause game when this menu opens
-        Time.timeScale = 0f;
-        AudioListener.pause = true;
-
-        EventSystem eventSystem = EventSystem.current;
-        if (eventSystem != null)
+        switch (actionName)
         {
-            eventSystem.enabled = true;
-        }
-    }
-
-    public override void OnMenuClosed()
-    {
-        // Resume game when this menu closes (if no other menus are open)
-        if (MenuManager.Instance.MenuCount == 0)
-        {
-            Time.timeScale = 1f;
-            AudioListener.pause = false;
+            case "QuickResume":
+                OnResumeClicked();
+                break;
+            case "QuickQuit":
+                OnQuitClicked();
+                break;
         }
     }
 }

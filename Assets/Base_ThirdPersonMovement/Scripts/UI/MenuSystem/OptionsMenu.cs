@@ -12,6 +12,14 @@ public class OptionsMenu : BaseMenu
 
     protected override void Awake()
     {
+        // Explicitly set the menu ID to ensure it matches
+        menuId = "OptionsMenu";
+
+        // Configure menu properties
+        menuType = MenuType.Additive;  // Options stack on top of pause menu
+        shouldPauseGame = false;        // Don't change pause state
+        handlesOwnInput = false;        // Use default input handling
+
         base.Awake();
         SetupButtons();
         SetupControls();
@@ -20,6 +28,9 @@ public class OptionsMenu : BaseMenu
     private void SetupButtons()
     {
         backButton.onClick.AddListener(OnBackClicked);
+
+        // Set default selection for gamepad navigation
+        defaultSelection = masterVolumeSlider;
     }
 
     private void SetupControls()
@@ -73,12 +84,15 @@ public class OptionsMenu : BaseMenu
     private void OnVolumeChanged(float volume)
     {
         AudioListener.volume = volume;
-        // Could also trigger an event here for other audio systems
+        // Trigger event for other systems that might need to know about volume changes
+        EventManager.TriggerEvent("VolumeChanged");
+        PlayerPrefs.SetFloat("MasterVolume", volume);
     }
 
     private void OnFullscreenChanged(bool isFullscreen)
     {
         Screen.fullScreen = isFullscreen;
+        PlayerPrefs.SetInt("Fullscreen", isFullscreen ? 1 : 0);
     }
 
     private void OnResolutionChanged(int resolutionIndex)
@@ -86,5 +100,25 @@ public class OptionsMenu : BaseMenu
         Resolution[] resolutions = Screen.resolutions;
         Resolution resolution = resolutions[resolutionIndex];
         Screen.SetResolution(resolution.width, resolution.height, Screen.fullScreen);
+
+        PlayerPrefs.SetString("Resolution", $"{resolution.width}x{resolution.height}");
+    }
+
+    // Example of custom input handling for fine-tuning volume with gamepad
+    public override void OnNavigationInput(Vector2 input)
+    {
+        // If volume slider is selected and we get horizontal input
+        if (UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject == masterVolumeSlider.gameObject)
+        {
+            if (Mathf.Abs(input.x) > 0.1f)
+            {
+                float newValue = masterVolumeSlider.value + (input.x * 0.01f);
+                masterVolumeSlider.value = Mathf.Clamp01(newValue);
+                return; // Don't call base implementation
+            }
+        }
+
+        // Default navigation for other elements
+        base.OnNavigationInput(input);
     }
 }

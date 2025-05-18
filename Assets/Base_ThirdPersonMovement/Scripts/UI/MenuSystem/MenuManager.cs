@@ -28,9 +28,18 @@ public class MenuManager : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void Start()
     {
-        HandleInput();
+        // Subscribe to events
+        EventManager.StartListening("MenuBack", OnBackInput);
+        EventManager.StartListening("MenuPauseToggle", OnPauseToggleInput);
+    }
+
+    private void OnDestroy()
+    {
+        // Unsubscribe from events
+        EventManager.StopListening("MenuBack", OnBackInput);
+        EventManager.StopListening("MenuPauseToggle", OnPauseToggleInput);
     }
 
     private void InitializeMenus()
@@ -43,18 +52,27 @@ public class MenuManager : MonoBehaviour
         }
     }
 
-    private void HandleInput()
+    private void OnBackInput()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        // this is only ever your “go back one level” logic:
+        if (menuStack.Count > 0)
+            GoBack();
+    }
+
+    private void OnPauseToggleInput()
+    {
+        // your old OnGlobalCancelInput logic, but only for Pause toggles:
+        if (menuStack.Count == 0)
         {
-            if (menuStack.Count == 0)
-            {
-                OpenMenu("PauseMenu");
-            }
+            OpenMenu("PauseMenu");
+        }
+        else
+        {
+            var current = GetCurrentMenu();
+            if (current?.MenuId == "PauseMenu")
+                ResumeGame();
             else
-            {
                 GoBack();
-            }
         }
     }
 
@@ -66,31 +84,59 @@ public class MenuManager : MonoBehaviour
             return;
         }
 
-        // Hide current top menu if exists
-        if (menuStack.Count > 0)
+        IMenu newMenu = menuRegistry[menuId];
+        IMenu currentMenu = menuStack.Count > 0 ? menuStack.Peek() : null;
+
+        // Handle different menu types
+        switch (newMenu.MenuType)
         {
-            menuStack.Peek().Hide();
+            case MenuType.Replace:
+                // Close all existing menus and show new one
+                CloseAllMenus();
+                break;
+
+            case MenuType.Modal:
+            case MenuType.Additive:
+                // Hide current menu but keep in stack
+                currentMenu?.Hide();
+                break;
+
+            case MenuType.Overlay:
+                // Don't hide current menu, just add on top
+                break;
         }
 
-        // Show new menu
-        IMenu menu = menuRegistry[menuId];
-        menu.Show();
-        menuStack.Push(menu);
+        // Show new menu and add to stack
+        newMenu.Show();
+        menuStack.Push(newMenu);
+
+        // Trigger events
+        EventManager.TriggerEvent("MenuStackChanged");
+        EventManager.TriggerEvent($"Menu_{menuId}_Opened");
     }
 
     public void GoBack()
     {
         if (menuStack.Count > 0)
         {
-            // Hide current menu
+            // Hide and remove current menu
             IMenu currentMenu = menuStack.Pop();
+            string menuId = currentMenu.MenuId;
             currentMenu.Hide();
 
-            // Show previous menu if exists
+            // Show previous menu if exists and menu type allows it
             if (menuStack.Count > 0)
             {
-                menuStack.Peek().Show();
+                IMenu previousMenu = menuStack.Peek();
+                if (currentMenu.MenuType != MenuType.Overlay)
+                {
+                    previousMenu.Show();
+                }
             }
+
+            // Trigger events
+            EventManager.TriggerEvent("MenuStackChanged");
+            EventManager.TriggerEvent($"Menu_{menuId}_Closed");
         }
     }
 
@@ -101,8 +147,27 @@ public class MenuManager : MonoBehaviour
             IMenu menu = menuStack.Pop();
             menu.Hide();
         }
+
+        EventManager.TriggerEvent("MenuStackChanged");
+        EventManager.TriggerEvent("AllMenusClosed");
     }
 
+    public IMenu GetCurrentMenu()
+    {
+        return menuStack.Count > 0 ? menuStack.Peek() : null;
+    }
+
+    public bool HasMenuOfType(MenuType menuType)
+    {
+        foreach (var menu in menuStack)
+        {
+            if (menu.MenuType == menuType)
+                return true;
+        }
+        return false;
+    }
+
+    // Convenience methods
     public void ResumeGame()
     {
         CloseAllMenus();

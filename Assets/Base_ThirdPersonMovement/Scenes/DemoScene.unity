@@ -250,6 +250,7 @@ GameObject:
   m_Component:
   - component: {fileID: 127614319}
   - component: {fileID: 127614320}
+  - component: {fileID: 127614321}
   m_Layer: 0
   m_Name: ----- UTILITIES
   m_TagString: Untagged
@@ -287,6 +288,19 @@ MonoBehaviour:
   allMenus:
   - {fileID: 642934444}
   - {fileID: 923426879}
+--- !u!114 &127614321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 127614318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 700d6791dae2e0a4bae5a94aa97b4889, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  inputReader: {fileID: 156783685222112411}
 --- !u!1 &188220337
 GameObject:
   m_ObjectHideFlags: 0
@@ -862,7 +876,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menuId: PauseMenu
+  menuType: 2
   menuPanel: {fileID: 8162611316815129631}
+  handlesOwnInput: 0
+  shouldPauseGame: 1
+  defaultSelection: {fileID: 17920669}
+  lastSelectedElement: {fileID: 0}
   resumeButton: {fileID: 17920669}
   optionsButton: {fileID: 834131305}
   quitButton: {fileID: 1471918877}
@@ -1386,7 +1405,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menuId: OptionsMenu
+  menuType: 2
   menuPanel: {fileID: 8420339820143237238}
+  handlesOwnInput: 0
+  shouldPauseGame: 1
+  defaultSelection: {fileID: 2054218524}
+  lastSelectedElement: {fileID: 0}
   masterVolumeSlider: {fileID: 2054218524}
   resolutionDropdown: {fileID: 1233228597}
   fullscreenToggle: {fileID: 1781104526}

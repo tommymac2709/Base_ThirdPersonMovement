@@ -8,17 +8,20 @@ using UnityEngine.InputSystem;
 /// Handles player input and bridges Unity's Input System events to the game's systems.
 /// Implements IPlayerActions for automatic input callback wiring.
 /// </summary>
-
 public class InputReader : MonoBehaviour, Controls.IPlayerActions, Controls.IUIActions
 {
     public bool IsSprinting { get; private set; }
-
     // Current value of the player movement input (Vector2: x = left/right, y = forward/backward).
     public Vector2 MovementValue { get; private set; }
 
+    // Player events
     public event Action CancelWindowEvent;
-
     public event Action JumpEvent;
+    public event Action PauseEvent; // New pause event
+
+    // UI/Menu events  
+    public event Action SubmitEvent;
+    public event Action<Vector2> NavigateEvent;
 
     public Controls controls;
 
@@ -27,7 +30,6 @@ public class InputReader : MonoBehaviour, Controls.IPlayerActions, Controls.IUIA
         controls = new Controls();
         controls.Player.SetCallbacks(this);
         controls.UI.SetCallbacks(this);
-
         controls.Player.Enable();
         controls.UI.Enable();
 
@@ -41,7 +43,6 @@ public class InputReader : MonoBehaviour, Controls.IPlayerActions, Controls.IUIA
         // Clean up event subscriptions and ensure controls are disabled.
         WindowController.OnAnyWindowOpened -= DisableControls;
         WindowController.OnAllWindowsClosed -= EnableControls;
-
         controls.Player.Disable();
         controls.UI.Disable();
     }
@@ -71,8 +72,7 @@ public class InputReader : MonoBehaviour, Controls.IPlayerActions, Controls.IUIA
         controls.Player.Enable();
     }
 
-    // --------- Input System Callback Implementations ----------
-
+    // --------- Player Input System Callback Implementations ----------
     public void OnJump(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
@@ -101,9 +101,27 @@ public class InputReader : MonoBehaviour, Controls.IPlayerActions, Controls.IUIA
         }
     }
 
+    public void OnPause(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return;
+        PauseEvent?.Invoke();
+    }
+
+    // --------- UI Input System Callback Implementations ----------
     public void OnCancelWindow(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
         CancelWindowEvent?.Invoke();
+    }
+
+    public void OnSubmit(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return;
+        SubmitEvent?.Invoke();
+    }
+
+    public void OnNavigate(InputAction.CallbackContext context)
+    {
+        NavigateEvent?.Invoke(context.ReadValue<Vector2>());
     }
 }
