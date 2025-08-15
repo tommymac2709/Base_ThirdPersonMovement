@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1327190246555124914}
   - component: {fileID: 1895604213129220213}
   m_Layer: 0
-  m_Name: PersistenObjectsSpawner
+  m_Name: PersistentObjectsSpawner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

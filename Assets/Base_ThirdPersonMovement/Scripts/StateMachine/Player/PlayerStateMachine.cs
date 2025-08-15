@@ -40,11 +40,15 @@ public class PlayerStateMachine : StateMachine
 
     [field: Header("Jump Movement")]
     [field: SerializeField] public float JumpForce { get; private set; }
+    [field: SerializeField] public float JumpAirControlStrength { get; private set; } = 0.3f;
+    [field: SerializeField] public float JumpBackwardMomentumReduction { get; private set; } = 0.8f;
 
-    /// <summary>
-    /// Event fired when something save-related happens (extend as needed).
-    /// </summary>
-    public event Action onSaveableEvent;
+
+    [field: Header("Falling Movement")]
+    [field: SerializeField] public float FallAirControlStrength { get; private set; } = 0.25f;
+    [field: SerializeField] public float FallBackwardMomentumReduction { get; private set; } = 0.85f;
+
+
 
     /// <summary>
     /// Initialize the main camera reference and switch to the default (FreeLook) state.
