@@ -36,7 +36,7 @@ public class InputReader : MonoBehaviour, Controls.IPlayerActions
     }
 
     /// <summary>
-    /// Disables both Player and UI input controls.
+    /// Add all of the action maps you have here.
     /// </summary>
     private void DisableAllControls()
     {
@@ -69,7 +69,7 @@ public class InputReader : MonoBehaviour, Controls.IPlayerActions
 
     public void OnLook(InputAction.CallbackContext context)
     {
-        // Intentionally left empty – implement look functionality as needed.
+        // Intentionally left empty – implement look functionality as needed. Look is handled by the Cinemachine FreeLook Camera by default.
     }
 
     public void OnMove(InputAction.CallbackContext context)

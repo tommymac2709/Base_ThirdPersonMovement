@@ -25,7 +25,7 @@ public class PlayerFreeLookState : PlayerBaseState
     }
 
     /// <summary>
-    /// Called when entering the free look state. Sets up animation and subscribes to jump events.
+    /// Called when entering the free look state. Sets up animation and subscribes to any necessary input events.
     /// </summary>
     public override void Enter()
     {
@@ -39,7 +39,7 @@ public class PlayerFreeLookState : PlayerBaseState
     }
 
     /// <summary>
-    /// Called every frame to update movement and animation based on input.
+    /// Called every frame. Include things like movement, input handling etc
     /// </summary>
     /// <param name="deltaTime">The time since the last frame.</param>
     public override void Tick(float deltaTime)
@@ -62,7 +62,7 @@ public class PlayerFreeLookState : PlayerBaseState
     }
 
     /// <summary>
-    /// Called when exiting the free look state. Unsubscribes from jump events.
+    /// Called when exiting the free look state. Unsubscribe from events here.
     /// </summary>
     public override void Exit()
     {

@@ -49,9 +49,6 @@ public abstract class PlayerBaseState : State
     /// </summary>
     protected void ReturnToLocomotion()
     {
-       
-        
-            stateMachine.SwitchState(new PlayerFreeLookState(stateMachine));
-        
+        stateMachine.SwitchState(new PlayerFreeLookState(stateMachine));
     }
 }

@@ -210,6 +210,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: ----- CORE_OBJECTS
       objectReference: {fileID: 0}
+    - target: {fileID: 3009940727177614635, guid: 2d886c7bd106e6a418ee3a6adb55a821, type: 3}
+      propertyPath: <JumpForce>k__BackingField
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3009940727177614635, guid: 2d886c7bd106e6a418ee3a6adb55a821, type: 3}
+      propertyPath: <FallAirControlStrength>k__BackingField
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3009940727177614635, guid: 2d886c7bd106e6a418ee3a6adb55a821, type: 3}
+      propertyPath: <JumpAirControlStrength>k__BackingField
+      value: 0.8
+      objectReference: {fileID: 0}
     - target: {fileID: 7349297181865441320, guid: 2d886c7bd106e6a418ee3a6adb55a821, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
