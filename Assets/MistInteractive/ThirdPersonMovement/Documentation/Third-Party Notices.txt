@@ -1,0 +1,3 @@
+The following assets are used in this package:
+
+This asset uses the character Abe obtained from Mixamo (Adobe) under Mixamo’s royalty-free licence allowing commercial, non-profit and educational use. Redistribution of the asset files in raw form is not permitted.
