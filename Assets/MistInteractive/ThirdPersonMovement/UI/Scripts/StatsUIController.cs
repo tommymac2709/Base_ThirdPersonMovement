@@ -3,13 +3,13 @@ using UnityEngine.UI;
 using TMPro;
 using MistInteractive.ThirdPerson.Player;
 using MistInteractive.ThirdPerson.Stats;
-using Unity.VisualScripting.Antlr3.Runtime.Misc;
 
 namespace MistInteractive.ThirdPersonMovement.UI
 {
     /// <summary>
     /// UI controller for displaying player stats (Health, Stamina, Mana, XP, Level).
-    /// Automatically finds PlayerStatsModule and subscribes to events.
+    /// Automatically finds stat modules and subscribes to events.
+    /// Gracefully handles missing modules - only displays UI for installed modules.
     /// </summary>
     public class StatsUIController : MonoBehaviour
     {
@@ -33,7 +33,10 @@ namespace MistInteractive.ThirdPersonMovement.UI
         [Header("References")]
         [SerializeField] private PlayerStateMachine playerStateMachine;
 
-        private PlayerStatsModule statsModule;
+        private PlayerHealthModule healthModule;
+        private PlayerStaminaModule staminaModule;
+        private PlayerManaModule manaModule;
+        private PlayerProgressionModule progressionModule;
 
         private void Start()
         {
@@ -49,134 +52,186 @@ namespace MistInteractive.ThirdPersonMovement.UI
                 }
             }
 
-            // Get PlayerStatsModule
-            statsModule = playerStateMachine.GetModule<PlayerStatsModule>();
-            if (statsModule == null)
+            // Get all stat modules (null checks allow graceful degradation)
+            healthModule = playerStateMachine.GetModule<PlayerHealthModule>();
+            staminaModule = playerStateMachine.GetModule<PlayerStaminaModule>();
+            manaModule = playerStateMachine.GetModule<PlayerManaModule>();
+            progressionModule = playerStateMachine.GetModule<PlayerProgressionModule>();
+
+            // Subscribe to events (with null checks)
+            if (healthModule != null)
             {
-                Debug.LogError("[StatsUIController] PlayerStateMachine does not have a PlayerStatsModule!");
-                enabled = false;
-                return;
+                healthModule.OnHealthChanged += UpdateHealthUI;
             }
 
-            // Subscribe to events
-            statsModule.OnHealthChanged += UpdateHealthUI;
-            statsModule.OnStaminaChanged += UpdateStaminaUI;
-            statsModule.OnManaChanged += UpdateManaUI;
-            statsModule.OnLevelUp += UpdateLevelUI;
-            statsModule.OnExperienceGained += UpdateXPUI;
+            if (staminaModule != null)
+            {
+                staminaModule.OnStaminaChanged += UpdateStaminaUI;
+            }
+
+            if (manaModule != null)
+            {
+                manaModule.OnManaChanged += UpdateManaUI;
+            }
+
+            if (progressionModule != null)
+            {
+                progressionModule.OnLevelUp += UpdateLevelUI;
+                progressionModule.OnExperienceGained += UpdateXPUI;
+            }
 
             // Initial update
             UpdateAllUI();
+
+            // Log which modules were found
+            Debug.Log($"[StatsUIController] Initialized - Health: {healthModule != null}, Stamina: {staminaModule != null}, Mana: {manaModule != null}, Progression: {progressionModule != null}");
         }
 
         private void OnDestroy()
         {
             // Unsubscribe from events
-            if (statsModule != null)
+            if (healthModule != null)
             {
-                statsModule.OnHealthChanged -= UpdateHealthUI;
-                statsModule.OnStaminaChanged -= UpdateStaminaUI;
-                statsModule.OnManaChanged -= UpdateManaUI;
-                statsModule.OnLevelUp -= UpdateLevelUI;
-                statsModule.OnExperienceGained -= UpdateXPUI;
+                healthModule.OnHealthChanged -= UpdateHealthUI;
+            }
+
+            if (staminaModule != null)
+            {
+                staminaModule.OnStaminaChanged -= UpdateStaminaUI;
+            }
+
+            if (manaModule != null)
+            {
+                manaModule.OnManaChanged -= UpdateManaUI;
+            }
+
+            if (progressionModule != null)
+            {
+                progressionModule.OnLevelUp -= UpdateLevelUI;
+                progressionModule.OnExperienceGained -= UpdateXPUI;
             }
         }
 
         private void UpdateAllUI()
         {
-            UpdateHealthUI(statsModule.CurrentHealth);
-            UpdateStaminaUI(statsModule.CurrentStamina);
-            UpdateManaUI(statsModule.CurrentMana);
-            UpdateLevelUI();
-            UpdateXPUI(0); // Trigger XP display update
+            if (healthModule != null)
+                UpdateHealthUI(healthModule.CurrentHealth);
+
+            if (staminaModule != null)
+                UpdateStaminaUI(staminaModule.CurrentStamina);
+
+            if (manaModule != null)
+                UpdateManaUI(manaModule.CurrentMana);
+
+            if (progressionModule != null)
+            {
+                UpdateLevelUI();
+                UpdateXPUI(0); // Trigger XP display update
+            }
         }
 
         private void UpdateHealthUI(float currentHealth)
         {
+            if (healthModule == null) return;
+
             if (healthSlider != null)
             {
-                healthSlider.maxValue = statsModule.MaxHealth;
+                healthSlider.maxValue = healthModule.MaxHealth;
                 healthSlider.value = currentHealth;
             }
 
             if (healthText != null)
             {
-                healthText.text = $"{Mathf.CeilToInt(currentHealth)}/{Mathf.CeilToInt(statsModule.MaxHealth)}";
+                healthText.text = $"{Mathf.CeilToInt(currentHealth)}/{Mathf.CeilToInt(healthModule.MaxHealth)}";
             }
         }
 
         private void UpdateStaminaUI(float currentStamina)
         {
+            if (staminaModule == null) return;
+
             if (staminaSlider != null)
             {
-                staminaSlider.maxValue = statsModule.MaxStamina;
+                staminaSlider.maxValue = staminaModule.MaxStamina;
                 staminaSlider.value = currentStamina;
             }
 
             if (staminaText != null)
             {
-                staminaText.text = $"{Mathf.CeilToInt(currentStamina)}/{Mathf.CeilToInt(statsModule.MaxStamina)}";
+                staminaText.text = $"{Mathf.CeilToInt(currentStamina)}/{Mathf.CeilToInt(staminaModule.MaxStamina)}";
             }
         }
 
         private void UpdateManaUI(float currentMana)
         {
+            if (manaModule == null) return;
+
             if (manaSlider != null)
             {
-                manaSlider.maxValue = statsModule.MaxMana;
+                manaSlider.maxValue = manaModule.MaxMana;
                 manaSlider.value = currentMana;
             }
 
             if (manaText != null)
             {
-                manaText.text = $"{Mathf.CeilToInt(currentMana)}/{Mathf.CeilToInt(statsModule.MaxMana)}";
+                manaText.text = $"{Mathf.CeilToInt(currentMana)}/{Mathf.CeilToInt(manaModule.MaxMana)}";
             }
         }
 
         private void UpdateLevelUI()
         {
+            if (progressionModule == null) return;
+
             if (levelText != null)
             {
-                levelText.text = statsModule.CurrentLevel.ToString();
+                levelText.text = progressionModule.CurrentLevel.ToString();
             }
         }
 
         private void UpdateXPUI(float xpGained)
         {
+            if (progressionModule == null) return;
+
             if (xpSlider != null)
             {
-                xpSlider.maxValue = statsModule.ExperienceToNextLevel;
-                xpSlider.value = statsModule.CurrentXP;
+                xpSlider.maxValue = progressionModule.ExperienceToNextLevel;
+                xpSlider.value = progressionModule.CurrentXP;
             }
 
             if (xpText != null)
             {
-                xpText.text = $"{Mathf.FloorToInt(statsModule.CurrentXP)}/{Mathf.FloorToInt(statsModule.ExperienceToNextLevel)} XP";
+                xpText.text = $"{Mathf.FloorToInt(progressionModule.CurrentXP)}/{Mathf.FloorToInt(progressionModule.ExperienceToNextLevel)} XP";
             }
         }
 
         [ContextMenu("Deal 25 Damage")]
         void TestDamage()
         {
-            statsModule?.DealDamage(25f);
+            healthModule?.TakeDamage(25f);
         }
 
         [ContextMenu("Heal 50 HP")]
         void TestHeal()
         {
-            statsModule?.Heal(50f);
+            healthModule?.Heal(50f);
         }
 
         [ContextMenu("Gain 100 XP")]
         void TestXP()
         {
-            statsModule?.GainExperience(100f);
+            progressionModule?.GainExperience(100f);
         }
 
         [ContextMenu("Use 30 Stamina")]
         void TestStamina()
         {
-            statsModule?.UseStamina(30f);
+            staminaModule?.Use(30f);
+        }
+
+        [ContextMenu("Use 20 Mana")]
+        void TestMana()
+        {
+            manaModule?.Use(20f);
         }
     }
 }
