@@ -10,8 +10,8 @@ namespace MistInteractive.ThirdPerson.Player
 
     public class PlayerFreeMovementState : PlayerBaseState
     {
-        private readonly int FreeLookBlendTreeHash = Animator.StringToHash("FreeLookBlendTree");
-        private readonly int FreeLookSpeedHash = Animator.StringToHash("FreeLookSpeed");
+        private readonly int FreeLookBlendTreeHash = Animator.StringToHash("FreeMovementBlendTree");
+        private readonly int FreeLookSpeedHash = Animator.StringToHash("FreeMovementSpeed");
         private const float AnimatorDampTime = 0.1f;
         private const float CrossFadeDuration = 0.1f;
 
