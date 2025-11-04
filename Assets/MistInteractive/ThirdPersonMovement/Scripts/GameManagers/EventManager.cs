@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MaintenanceCrew.Core
+namespace MistInteractive.ThirdPerson
 {
     public static class EventManager
     {
