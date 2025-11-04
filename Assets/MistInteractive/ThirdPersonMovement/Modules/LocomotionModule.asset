@@ -15,4 +15,4 @@ MonoBehaviour:
   freeLookMovementSpeed: 6
   freeLookSprintMovementSpeed: 9
   rotationDamping: 12
-  jumpForce: 10
+  jumpForce: 5
