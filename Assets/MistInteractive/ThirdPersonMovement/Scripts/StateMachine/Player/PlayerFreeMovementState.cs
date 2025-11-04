@@ -16,6 +16,7 @@ namespace MistInteractive.ThirdPerson.Player
         private const float CrossFadeDuration = 0.1f;
 
         private bool shouldFade;
+        private LocomotionModule loco;
 
         /// <summary>
         /// Constructs a new free look state.
@@ -32,6 +33,13 @@ namespace MistInteractive.ThirdPerson.Player
         /// </summary>
         public override void Enter()
         {
+            loco = stateMachine.GetModule<LocomotionModule>();
+            if (loco == null)
+            {
+                Debug.LogError("[PlayerFreeMovementState] Missing LocomotionModule! Assign it in PlayerStateMachine inspector.");
+                return;
+            }
+
             stateMachine.InputBridge.JumpEvent += OnJump;
             stateMachine.Animator.SetFloat(FreeLookSpeedHash, 0f);
 
@@ -47,12 +55,14 @@ namespace MistInteractive.ThirdPerson.Player
         /// <param name="deltaTime">The time since the last frame.</param>
         public override void Tick(float deltaTime)
         {
+            if (loco == null) return;
+
             Vector3 movement = CalculateMovement();
 
             if (stateMachine.InputBridge.IsSprinting)
-                Move(movement * stateMachine.FreeLookSprintMovementSpeed, deltaTime);
+                Move(movement * loco.freeLookSprintMovementSpeed, deltaTime);
             else
-                Move(movement * stateMachine.FreeLookMovementSpeed, deltaTime);
+                Move(movement * loco.freeLookMovementSpeed, deltaTime);
 
             if (stateMachine.InputBridge.MovementValue == Vector2.zero)
             {
@@ -106,7 +116,7 @@ namespace MistInteractive.ThirdPerson.Player
             stateMachine.transform.rotation = Quaternion.Lerp(
                 stateMachine.transform.rotation,
                 Quaternion.LookRotation(movement),
-                deltaTime * stateMachine.RotationDamping);
+                deltaTime * loco.rotationDamping);
         }
     }
 

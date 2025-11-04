@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using MistInteractive.ThirdPerson.Base;
 using MistInteractive.ThirdPerson.Control;
@@ -27,24 +28,43 @@ namespace MistInteractive.ThirdPerson.Player
         [field: SerializeField] public InputBridge InputBridge { get; private set; }
         [field: SerializeField] public Transform MainCameraTransform { get; private set; }
 
+        [field: Header("Player Modules")]
+        [field: SerializeField] private List<PlayerModule> modules = new();
 
-        // Free look state movement settings
+        /// <summary>
+        /// Gets a module of the specified type from the modules list.
+        /// </summary>
+        /// <typeparam name="T">The type of module to retrieve.</typeparam>
+        /// <returns>The module instance, or null if not found.</returns>
+        public T GetModule<T>() where T : PlayerModule
+        {
+            return modules.Find(m => m is T) as T;
+        }
 
-        [field: Header("Free Look Movement")]
+
+        // Free look state movement settings (DEPRECATED - use LocomotionModule)
+
+        [System.Obsolete("Moved to LocomotionModule")]
+        [field: Header("Free Look Movement (DEPRECATED)")]
         [field: SerializeField] public float FreeLookMovementSpeed { get; private set; }
+
+        [System.Obsolete("Moved to LocomotionModule")]
         [field: SerializeField] public float FreeLookSprintMovementSpeed { get; private set; }
+
+        [System.Obsolete("Moved to LocomotionModule")]
         [field: SerializeField, Tooltip("How quickly the character model rotates (Higher is quicker)")]
         public float RotationDamping { get; private set; }
 
 
-        // Jumping settings
+        // Jumping settings (DEPRECATED - use LocomotionModule)
 
-        [field: Header("Jump Movement")]
+        [System.Obsolete("Moved to LocomotionModule")]
+        [field: Header("Jump Movement (DEPRECATED)")]
         [field: SerializeField] public float JumpForce { get; private set; }
 
 
         /// <summary>
-        /// Initialize the main camera reference and switch to the default (FreeLook) state.
+        /// Initialize the main camera reference, install modules, and switch to the default (FreeLook) state.
         /// </summary>
         private void Start()
         {
@@ -56,6 +76,13 @@ namespace MistInteractive.ThirdPerson.Player
             }
 
             MainCameraTransform = Camera.main.transform;
+
+            // Install all player modules
+            foreach (var module in modules)
+            {
+                module?.Install(this);
+            }
+
             SwitchState(new PlayerFreeMovementState(this));
         }
 

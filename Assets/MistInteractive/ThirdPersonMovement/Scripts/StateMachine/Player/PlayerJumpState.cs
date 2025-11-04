@@ -20,7 +20,14 @@ namespace MistInteractive.ThirdPerson.Player
 
         public override void Enter()
         {
-            stateMachine.ForcesHandler.Jump(stateMachine.JumpForce);
+            var loco = stateMachine.GetModule<LocomotionModule>();
+            if (loco == null)
+            {
+                Debug.LogError("[PlayerJumpState] Missing LocomotionModule! Assign it in PlayerStateMachine inspector.");
+                return;
+            }
+
+            stateMachine.ForcesHandler.Jump(loco.jumpForce);
 
             // Store half the current horizontal velocity as jump momentum.
             momentum = stateMachine.Controller.velocity / 2;

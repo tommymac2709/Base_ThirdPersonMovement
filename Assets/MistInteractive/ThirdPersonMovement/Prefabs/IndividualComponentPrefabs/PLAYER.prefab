@@ -77,14 +77,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Animator>k__BackingField: {fileID: 8679914107795419130}
   <Controller>k__BackingField: {fileID: 5911100181234932378}
-  <ForceReceiver>k__BackingField: {fileID: 3008517477395520100}
+  <ForcesHandler>k__BackingField: {fileID: 3008517477395520100}
   <FreeLookCamera>k__BackingField: {fileID: 0}
-  <InputReader>k__BackingField: {fileID: 7344624464923711921}
+  <InputBridge>k__BackingField: {fileID: 7344624464923711921}
   <MainCameraTransform>k__BackingField: {fileID: 0}
-  <FreeLookMovementSpeed>k__BackingField: 3
-  <FreeLookSprintMovementSpeed>k__BackingField: 5
-  <RotationDamping>k__BackingField: 8
-  <JumpForce>k__BackingField: 5
+  modules:
+  - {fileID: 11400000, guid: 20059443885980f4d9aa24cfe29020a5, type: 2}
+  <FreeLookMovementSpeed>k__BackingField: 0
+  <FreeLookSprintMovementSpeed>k__BackingField: 0
+  <RotationDamping>k__BackingField: 0
+  <JumpForce>k__BackingField: 0
 --- !u!95 &8679914107795419130
 Animator:
   serializedVersion: 7
