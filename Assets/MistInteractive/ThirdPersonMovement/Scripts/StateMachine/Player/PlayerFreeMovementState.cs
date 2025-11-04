@@ -60,9 +60,9 @@ namespace MistInteractive.ThirdPerson.Player
             Vector3 movement = CalculateMovement();
 
             if (stateMachine.InputBridge.IsSprinting)
-                Move(movement * loco.freeLookSprintMovementSpeed, deltaTime);
+                Move(movement * loco.freeMoveSprintMovementSpeed, deltaTime);
             else
-                Move(movement * loco.freeLookMovementSpeed, deltaTime);
+                Move(movement * loco.freeMoveMovementSpeed, deltaTime);
 
             if (stateMachine.InputBridge.MovementValue == Vector2.zero)
             {
@@ -71,7 +71,7 @@ namespace MistInteractive.ThirdPerson.Player
             }
 
             stateMachine.Animator.SetFloat(FreeLookSpeedHash, 1, AnimatorDampTime, deltaTime);
-            FaceMovementDirection(movement, deltaTime);
+            FaceMovementDirection(movement, loco.rotationDamping, deltaTime);
         }
 
         /// <summary>
@@ -91,33 +91,6 @@ namespace MistInteractive.ThirdPerson.Player
             stateMachine.SwitchState(new PlayerJumpState(stateMachine));
         }
 
-        /// <summary>
-        /// Calculates the movement direction relative to the camera orientation and player input.
-        /// </summary>
-        /// <returns>The calculated movement vector.</returns>
-        private Vector3 CalculateMovement()
-        {
-            Vector3 forward = stateMachine.MainCameraTransform.forward;
-            Vector3 right = stateMachine.MainCameraTransform.right;
-            forward.y = 0f;
-            right.y = 0f;
-            forward.Normalize();
-            right.Normalize();
-            return forward * stateMachine.InputBridge.MovementValue.y + right * stateMachine.InputBridge.MovementValue.x;
-        }
-
-        /// <summary>
-        /// Rotates the player to face the movement direction, interpolating smoothly.
-        /// </summary>
-        /// <param name="movement">The direction to face.</param>
-        /// <param name="deltaTime">The time since the last frame.</param>
-        private void FaceMovementDirection(Vector3 movement, float deltaTime)
-        {
-            stateMachine.transform.rotation = Quaternion.Lerp(
-                stateMachine.transform.rotation,
-                Quaternion.LookRotation(movement),
-                deltaTime * loco.rotationDamping);
-        }
     }
 
 }

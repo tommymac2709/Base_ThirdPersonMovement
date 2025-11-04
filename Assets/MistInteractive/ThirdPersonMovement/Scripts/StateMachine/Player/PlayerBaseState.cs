@@ -43,9 +43,39 @@ namespace MistInteractive.ThirdPerson.Player
             stateMachine.Controller.Move((motion + stateMachine.ForcesHandler.Movement) * deltaTime);
         }
 
+        /// <summary>
+        /// Calculates the movement direction relative to the camera orientation and player input.
+        /// </summary>
+        /// <returns>The calculated normalized movement vector.</returns>
+        protected Vector3 CalculateMovement()
+        {
+            Vector3 forward = stateMachine.MainCameraTransform.forward;
+            Vector3 right = stateMachine.MainCameraTransform.right;
+            forward.y = 0f;
+            right.y = 0f;
+            forward.Normalize();
+            right.Normalize();
+            return forward * stateMachine.InputBridge.MovementValue.y + right * stateMachine.InputBridge.MovementValue.x;
+        }
 
         /// <summary>
-        /// Switches the state back to a locomotion state (free look or targeting) 
+        /// Rotates the character to face the movement direction, interpolating smoothly.
+        /// </summary>
+        /// <param name="movement">The direction to face.</param>
+        /// <param name="rotationDamping">How quickly to rotate (higher = faster).</param>
+        /// <param name="deltaTime">The time since the last frame.</param>
+        protected void FaceMovementDirection(Vector3 movement, float rotationDamping, float deltaTime)
+        {
+            if (movement.sqrMagnitude < 0.01f) return; // Don't rotate if no movement input
+
+            stateMachine.transform.rotation = Quaternion.Lerp(
+                stateMachine.transform.rotation,
+                Quaternion.LookRotation(movement),
+                deltaTime * rotationDamping);
+        }
+
+        /// <summary>
+        /// Switches the state back to a locomotion state (free look or targeting)
         /// depending on whether a target is currently selected.
         /// </summary>
         protected void ReturnToLocomotion()

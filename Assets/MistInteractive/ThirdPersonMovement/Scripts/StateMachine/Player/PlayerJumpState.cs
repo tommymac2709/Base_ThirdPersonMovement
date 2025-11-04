@@ -4,7 +4,7 @@ namespace MistInteractive.ThirdPerson.Player
 {
     /// <summary>
     /// State for when the player character is jumping.
-    /// Handles jump initiation, momentum, and transition to falling.
+    /// Handles jump initiation, air control, and transition to falling.
     /// </summary>
 
     public class PlayerJumpState : PlayerBaseState
@@ -13,14 +13,13 @@ namespace MistInteractive.ThirdPerson.Player
         private const float AnimatorDampTime = 0.1f;
         private const float CrossFadeDuration = 0.1f;
 
-        // Stores horizontal momentum carried into the jump.
-        private Vector3 momentum;
+        private LocomotionModule loco;
 
         public PlayerJumpState(PlayerStateMachine stateMachine) : base(stateMachine) { }
 
         public override void Enter()
         {
-            var loco = stateMachine.GetModule<LocomotionModule>();
+            loco = stateMachine.GetModule<LocomotionModule>();
             if (loco == null)
             {
                 Debug.LogError("[PlayerJumpState] Missing LocomotionModule! Assign it in PlayerStateMachine inspector.");
@@ -28,24 +27,26 @@ namespace MistInteractive.ThirdPerson.Player
             }
 
             stateMachine.ForcesHandler.Jump(loco.jumpForce);
-
-            // Store half the current horizontal velocity as jump momentum.
-            momentum = stateMachine.Controller.velocity / 2;
-            momentum.y = 0f;
-
             stateMachine.Animator.CrossFadeInFixedTime(JumpAnimHash, CrossFadeDuration);
         }
 
         public override void Tick(float deltaTime)
         {
-            Move(momentum, deltaTime);
+            if (loco == null) return;
 
+            // Apply air control based on current input
+            Vector3 movement = CalculateMovement();
+            Vector3 airMovement = movement * loco.airMovementSpeed * loco.airControlMultiplier;
+            Move(airMovement, deltaTime);
+            FaceMovementDirection(movement, loco.rotationDamping, deltaTime);
+
+            // Transition to fall when vertical velocity becomes negative
             if (stateMachine.Controller.velocity.y <= 0)
             {
                 stateMachine.SwitchState(new PlayerFallState(stateMachine));
-                return;
             }
         }
+
         public override void Exit()
         {
         }
