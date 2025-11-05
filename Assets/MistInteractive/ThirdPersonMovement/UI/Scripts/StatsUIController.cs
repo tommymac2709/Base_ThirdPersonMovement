@@ -186,6 +186,9 @@ namespace MistInteractive.ThirdPersonMovement.UI
             {
                 levelText.text = progressionModule.CurrentLevel.ToString();
             }
+
+            // Also update XP bar when level changes (it will have reset to overflow amount)
+            UpdateXPUI(0);
         }
 
         private void UpdateXPUI(float xpGained)
@@ -219,7 +222,7 @@ namespace MistInteractive.ThirdPersonMovement.UI
         [ContextMenu("Gain 100 XP")]
         void TestXP()
         {
-            progressionModule?.GainExperience(100f);
+            progressionModule?.GainExperience(150f);
         }
 
         [ContextMenu("Use 30 Stamina")]

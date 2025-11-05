@@ -408,7 +408,7 @@ Transform:
   - {fileID: 161183319}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &1119861599
+--- !u!1001 &1673273255
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -639,8 +639,8 @@ PrefabInstance:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1119861599}
   - {fileID: 850331861}
   - {fileID: 2004300092}
   - {fileID: 920181650}
   - {fileID: 1004607364}
+  - {fileID: 1673273255}
