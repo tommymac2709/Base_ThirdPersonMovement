@@ -18,6 +18,7 @@ namespace MistInteractive.ThirdPerson.Control
         // Player events
 
         public event Action JumpEvent;
+        public event Action DodgeEvent;
 
         public Controls controls;
 
@@ -70,7 +71,7 @@ namespace MistInteractive.ThirdPerson.Control
 
         public void OnLook(InputAction.CallbackContext context)
         {
-            // Intentionally left empty – implement look functionality as needed. Look is handled by the Cinemachine FreeLook Camera by default.
+            // Intentionally left empty ? implement look functionality as needed. Look is handled by the Cinemachine FreeLook Camera by default.
         }
 
         public void OnMove(InputAction.CallbackContext context)
@@ -89,6 +90,12 @@ namespace MistInteractive.ThirdPerson.Control
                 IsSprinting = false;
             }
         }
+
+        public void OnDodge(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+            DodgeEvent?.Invoke();
+        }
     }
 
 
@@ -96,4 +103,3 @@ namespace MistInteractive.ThirdPerson.Control
 
 
 
-    
