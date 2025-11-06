@@ -6,6 +6,7 @@ using System.Linq;
 using MistInteractive.ThirdPerson.Player;
 using MistInteractive.ThirdPerson.Stats;
 
+
 namespace MistInteractive.ThirdPersonMovement.Editor
 {
     /// <summary>
