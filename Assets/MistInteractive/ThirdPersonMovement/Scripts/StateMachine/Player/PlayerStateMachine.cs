@@ -18,6 +18,7 @@ namespace MistInteractive.ThirdPerson.Player
     /// SEE DOCUMENTATION FOR MORE DETAILS
     /// </summary>
 
+    [DefaultExecutionOrder(-100)]
     public class PlayerStateMachine : StateMachine
     {
         // Component references
