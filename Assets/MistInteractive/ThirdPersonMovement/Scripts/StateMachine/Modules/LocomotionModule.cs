@@ -30,5 +30,12 @@ namespace MistInteractive.ThirdPerson.Player
 
         [Tooltip("Base air movement speed in units per second")]
         public float airMovementSpeed = 6f;
+
+        [Header("Dodge Roll")]
+        [Tooltip("Duration of the dodge roll in seconds")]
+        public float dodgeDuration = 0.5f;
+
+        [Tooltip("Distance covered during dodge roll in units")]
+        public float dodgeDistance = 5f;
     }
 }
