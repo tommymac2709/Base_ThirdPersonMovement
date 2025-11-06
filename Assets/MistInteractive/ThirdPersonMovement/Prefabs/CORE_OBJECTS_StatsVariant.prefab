@@ -32,6 +32,14 @@ PrefabInstance:
       propertyPath: 'modules.Array.data[4]'
       value: 
       objectReference: {fileID: 11400000, guid: 80a74536a532c0444b2168deabef5a14, type: 2}
+    - target: {fileID: 2237783792096459780, guid: 2d886c7bd106e6a418ee3a6adb55a821, type: 3}
+      propertyPath: <FreeLookCamera>k__BackingField
+      value: 
+      objectReference: {fileID: 1000202902272384071}
+    - target: {fileID: 2237783792096459780, guid: 2d886c7bd106e6a418ee3a6adb55a821, type: 3}
+      propertyPath: <MainCameraTransform>k__BackingField
+      value: 
+      objectReference: {fileID: 7148324711706767467}
     - target: {fileID: 5710143891964931504, guid: 2d886c7bd106e6a418ee3a6adb55a821, type: 3}
       propertyPath: Target.LookAtTarget
       value: 
@@ -85,8 +93,18 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2d886c7bd106e6a418ee3a6adb55a821, type: 3}
+--- !u!1 &1000202902272384071 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8405501815914607770, guid: 2d886c7bd106e6a418ee3a6adb55a821, type: 3}
+  m_PrefabInstance: {fileID: 8739015602158381277}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3899808851291936570 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5717846528107823079, guid: 2d886c7bd106e6a418ee3a6adb55a821, type: 3}
+  m_PrefabInstance: {fileID: 8739015602158381277}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7148324711706767467 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1906371812423538870, guid: 2d886c7bd106e6a418ee3a6adb55a821, type: 3}
   m_PrefabInstance: {fileID: 8739015602158381277}
   m_PrefabAsset: {fileID: 0}
