@@ -62,8 +62,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4912360332271938952}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.25340134, y: 0.0000000070331243, z: -0.0000000018423348, w: 0.9673613}
-  m_LocalPosition: {x: -0.7418887, y: 7.4592113, z: 12.6468525}
+  m_LocalRotation: {x: 0.041567497, y: 0.8406682, z: -0.06519459, w: 0.5360027}
+  m_LocalPosition: {x: -2.793777, y: 1.9808425, z: 1.3002404}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -91,7 +91,7 @@ MonoBehaviour:
   Target:
     TrackingTarget: {fileID: 0}
     LookAtTarget: {fileID: 0}
-    CustomLookAtTarget: 0
+    CustomLookAtTarget: 1
   Lens:
     FieldOfView: 60.000004
     OrthographicSize: 5
@@ -146,7 +146,7 @@ MonoBehaviour:
     SplineCurvature: 0.5
   RecenteringTarget: 2
   HorizontalAxis:
-    Value: 0
+    Value: 114.95755
     Center: 0
     Range: {x: -180, y: 180}
     Wrap: 1
@@ -156,7 +156,7 @@ MonoBehaviour:
       Time: 2
     Restrictions: 0
   VerticalAxis:
-    Value: 17.5
+    Value: -2.6209314
     Center: 17.5
     Range: {x: -10, y: 45}
     Wrap: 0
@@ -259,7 +259,7 @@ MonoBehaviour:
         LegacyInput: 
         LegacyGain: 1
         CancelDeltaTime: 0
-      InputValue: 0
+      InputValue: -0
       Driver:
         AccelTime: 0.2
         DecelTime: 0.2
@@ -272,7 +272,7 @@ MonoBehaviour:
         LegacyInput: 
         LegacyGain: 1
         CancelDeltaTime: 0
-      InputValue: 0
+      InputValue: -0
       Driver:
         AccelTime: 0
         DecelTime: 0
@@ -306,8 +306,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8912236301998774310}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.25340134, y: 0.000000007033124, z: -0.0000000018423347, w: 0.9673613}
-  m_LocalPosition: {x: -0.7418887, y: 7.4592113, z: 12.6468525}
+  m_LocalRotation: {x: 0.041567497, y: 0.8406682, z: -0.06519459, w: 0.5360027}
+  m_LocalPosition: {x: -2.793777, y: 1.9808425, z: 1.3002404}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

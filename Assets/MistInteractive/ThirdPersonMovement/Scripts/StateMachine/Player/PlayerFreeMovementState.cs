@@ -41,6 +41,7 @@ namespace MistInteractive.ThirdPerson.Player
             }
 
             stateMachine.InputBridge.JumpEvent += OnJump;
+            stateMachine.InputBridge.DodgeEvent += OnDodge;
             stateMachine.Animator.SetFloat(FreeLookSpeedHash, 0f);
 
             if (shouldFade)
@@ -80,6 +81,7 @@ namespace MistInteractive.ThirdPerson.Player
         public override void Exit()
         {
             stateMachine.InputBridge.JumpEvent -= OnJump;
+            stateMachine.InputBridge.DodgeEvent -= OnDodge;
         }
 
         /// <summary>
@@ -89,6 +91,22 @@ namespace MistInteractive.ThirdPerson.Player
         private void OnJump()
         {
             stateMachine.SwitchState(new PlayerJumpState(stateMachine));
+        }
+
+        /// <summary>
+        /// Called when the player presses the dodge button.
+        /// Only allows dodging when the player is moving.
+        /// </summary>
+        private void OnDodge()
+        {
+            // Only allow dodge when moving
+            if (stateMachine.InputBridge.MovementValue == Vector2.zero)
+            {
+                return;
+            }
+
+            // Perform dodge
+            stateMachine.SwitchState(new PlayerDodgingState(stateMachine));
         }
 
     }

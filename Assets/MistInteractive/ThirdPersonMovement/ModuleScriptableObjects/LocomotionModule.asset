@@ -12,7 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59fecdac244e9064789503578dec1442, type: 3}
   m_Name: LocomotionModule
   m_EditorClassIdentifier: 
-  freeLookMovementSpeed: 6
-  freeLookSprintMovementSpeed: 9
+  freeMoveMovementSpeed: 6
+  freeMoveSprintMovementSpeed: 9
   rotationDamping: 12
   jumpForce: 5
+  airControlMultiplier: 0.3
+  airMovementSpeed: 6
+  dodgeDuration: 0.8
+  dodgeDistance: 5
