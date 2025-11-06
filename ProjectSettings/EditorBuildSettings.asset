@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/Scenes/MenuScene.unity
     guid: 1197ef28a5017ff48b09ec133457c823
   - enabled: 1
-    path: Assets/MistInteractive/ThirdPersonMovement/DemoScene/MovementPlayground.unity
+    path: Assets/MistInteractive/ThirdPersonMovement/MovementPlaygroundScene/MovementPlayground.unity
     guid: 99c9720ab356a0642a771bea13969a05
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 060308d31d199a54680cb8c0980403e6, type: 3}
