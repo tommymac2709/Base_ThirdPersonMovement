@@ -19,6 +19,7 @@ namespace MistInteractive.ThirdPerson.Control
 
         public event Action JumpEvent;
         public event Action DodgeEvent;
+        public event Action InteractEvent;
 
         public Controls controls;
 
@@ -95,6 +96,12 @@ namespace MistInteractive.ThirdPerson.Control
         {
             if (!context.performed) return;
             DodgeEvent?.Invoke();
+        }
+
+        public void OnInteract(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+            InteractEvent?.Invoke();
         }
     }
 
