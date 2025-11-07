@@ -210,6 +210,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5499542193296002431, guid: 0f6f14ddd8427004abb0796704a0c85b, type: 3}
+      propertyPath: playerStateMachine
+      value: 
+      objectReference: {fileID: 7677966015019169292}
     - target: {fileID: 6240405701540803680, guid: 0f6f14ddd8427004abb0796704a0c85b, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -442,12 +446,23 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0eca6fe5c01c8d540ad10c0e32891c92, type: 3}
+--- !u!114 &7677966015019169292 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2608122685259463000, guid: 0eca6fe5c01c8d540ad10c0e32891c92, type: 3}
+  m_PrefabInstance: {fileID: 7677966015019169291}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c786c7663613ebb408033324b95dbc58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 7677966015019169291}
+  - {fileID: 2083462235}
+  - {fileID: 1724124403}
   - {fileID: 2004300092}
   - {fileID: 920181650}
-  - {fileID: 2083462235}
-  - {fileID: 7677966015019169291}
-  - {fileID: 1724124403}
