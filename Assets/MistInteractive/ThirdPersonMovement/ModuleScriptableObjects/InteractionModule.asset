@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: InteractionModule
   m_EditorClassIdentifier: 
   interactionRange: 3
-  detectionAngle: 90
+  detectionAngle: 120
   interactableLayers:
     serializedVersion: 2
     m_Bits: 4294967295

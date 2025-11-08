@@ -8,11 +8,16 @@ The **Interaction Module** is a flexible, modular system that enables your playe
 
 - **Modular Design**: Works independently, can be omitted if not needed
 - **Flexible Detection**: Sphere-based detection with forward-facing angle filtering
+- **Hold-to-Interact**: Support for instant or timed interactions with progress feedback
+- **Custom Ranges**: Each interactable can override the default detection range
+- **Priority System**: Control which interactable is selected when multiple are at the same distance
+- **Cycling**: Q key to cycle through multiple interactables in range
+- **OnFocused/OnUnfocused**: Callbacks for visual effects (highlighting, particles, etc.)
+- **EventManager Integration**: Optional global event system integration
 - **Type-Safe Events**: C# events for loose coupling with other systems
 - **Self-Describing UI**: Each interactable defines its own visual presentation
 - **Context-Sensitive**: Validation hooks allow conditional interactions
-- **Single Button**: Simplified interaction using one input (E key by default)
-- **Visual Feedback**: Gizmos for debugging detection range and angle
+- **Visual Feedback**: Gizmos for debugging detection range, angle, and multiple targets
 - **Designer-Friendly**: Includes UnityEvent-based interactables for non-programmers
 
 ---
@@ -39,7 +44,12 @@ The **Interaction Module** is a flexible, modular system that enables your playe
 
 ### Input Setup (Already Done)
 
-The interact input (E key) is already configured in the Controls.inputactions file. If Unity doesn't auto-regenerate the Controls.cs file:
+The interaction inputs are already configured in the Controls.inputactions file:
+- **E Key**: Interact with focused object
+- **Q Key**: Cycle through multiple interactables
+- **Gamepad**: X button (interact), D-Pad Up (cycle)
+
+If Unity doesn't auto-regenerate the Controls.cs file:
 1. Select **Assets/MistInteractive/ThirdPersonMovement/Controls.inputactions**
 2. Click **"Generate C# Class"** in the Inspector
 
@@ -241,32 +251,49 @@ float InteractionRange { get; set; }          // Get/set detection range
 float DetectionAngle { get; set; }            // Get/set detection angle (0-180)
 string InteractKeyName { get; }               // Get default key name for UI
 bool IsInteractionEnabled { get; }            // Check if interactions are enabled
+bool IsHoldingInteract { get; }               // Check if currently holding interact button
+float HoldProgress { get; }                   // Get current hold progress (0-1)
 ```
 
 #### Methods
 
 ```csharp
+// Detection & Interaction
 IInteractable GetCurrentInteractable()        // Get currently detected interactable
 bool TryInteract()                            // Attempt interaction with current target
 void SetInteractionEnabled(bool enabled)      // Enable/disable interactions
 void SetDetectionActive(bool active)          // Enable/disable detection entirely
+
+// Cycling
+void CycleNext()                              // Cycle to next interactable
+void CyclePrevious()                          // Cycle to previous interactable
+int GetInteractableCount()                    // Get number of valid interactables in range
 ```
 
 #### Events
 
 ```csharp
-event Action<IInteractable> OnInteractableDetected   // Fired when new interactable is focused
-event Action OnInteractableLost                      // Fired when interactable is lost
-event Action<IInteractable, Transform> OnInteractionPerformed  // Fired after interaction
+event Action<IInteractable> OnInteractableDetected           // Fired when new interactable is focused
+event Action OnInteractableLost                              // Fired when interactable is lost
+event Action<IInteractable, Transform> OnInteractionPerformed // Fired after interaction
+event Action<float> OnHoldProgress                           // Fired during hold (progress 0-1)
 ```
 
 ### IInteractable Interface
 
 ```csharp
+// Core Methods
 void Interact(Transform interactor)              // Called when player interacts
 InteractionUIData GetUIData()                    // Returns UI configuration
 Transform GetTransform()                         // Returns this interactable's Transform
 bool CanInteract(Transform interactor)           // Validates if interaction can occur
+
+// Advanced Features
+float? GetCustomRange()                          // Return custom range or null for default
+float GetInteractionDuration()                   // Return 0 for instant, >0 for hold duration
+int GetPriority()                                // Return priority (higher = preferred)
+void OnFocused()                                 // Called when this becomes focused
+void OnUnfocused()                               // Called when this loses focus
 ```
 
 ### InteractableBase Class
@@ -274,9 +301,262 @@ bool CanInteract(Transform interactor)           // Validates if interaction can
 Extends IInteractable with default implementations and helper methods:
 
 ```csharp
-void SetEnabled(bool value)                     // Enable/disable this interactable
-void SetPromptText(string text)                 // Change prompt text dynamically
+// Enable/Disable
+void SetEnabled(bool value)                      // Enable/disable this interactable
+void SetPromptText(string text)                  // Change prompt text dynamically
+
+// Advanced Features (virtual, override as needed)
+float? GetCustomRange()                          // Returns customRange field or null
+float GetInteractionDuration()                   // Returns interactionDuration field
+int GetPriority()                                // Returns priority field
+void OnFocused()                                 // Fires eventOnFocused if configured
+void OnUnfocused()                               // Fires eventOnUnfocused if configured
+
+// EventManager Integration
+void FireInteractionEvent()                      // Call to fire eventOnInteract
 ```
+
+### InteractableBase Serialized Fields
+
+```csharp
+[Header("Interaction Settings")]
+string promptText                                // UI prompt text
+string buttonText                                // UI button text (empty = use default)
+Color promptColor                                // UI prompt color
+Sprite icon                                      // UI icon (optional)
+bool enabled                                     // Whether interactable is enabled
+
+[Header("Advanced Settings")]
+float customRange                                // Custom range (0 = use default)
+float interactionDuration                        // Hold duration (0 = instant)
+int priority                                     // Priority (0 = default)
+
+[Header("Event Manager Integration")]
+string eventOnInteract                           // Event to fire on interact
+string eventOnFocused                            // Event to fire on focused
+string eventOnUnfocused                          // Event to fire on unfocused
+```
+
+---
+
+## Advanced Features
+
+### Hold-to-Interact
+
+Some interactions require holding the button for a duration (opening heavy chests, hacking terminals, etc.).
+
+**Setup:**
+```csharp
+public class HeavyChest : InteractableBase
+{
+    void Awake()
+    {
+        promptText = "Open Heavy Chest";
+        interactionDuration = 2.5f; // Hold for 2.5 seconds
+    }
+
+    public override void Interact(Transform interactor)
+    {
+        // Only called after hold completes
+        OpenChest();
+    }
+}
+```
+
+**How it works:**
+- Set `interactionDuration > 0` (in seconds)
+- Player must hold E for the full duration
+- UI automatically shows "Hold E" instead of just "E"
+- Progress bar/percentage updates via `OnHoldProgress` event
+- Cancels if button released, target lost, or interaction disabled
+
+**UI Integration:**
+```csharp
+// Subscribe to hold progress
+interactionModule.OnHoldProgress += (progress) =>
+{
+    holdSlider.value = progress; // 0-1
+    holdText.text = $"{Mathf.RoundToInt(progress * 100)}%";
+};
+```
+
+---
+
+### Custom Interaction Ranges
+
+Different objects need different interaction distances:
+- Doors: 2m
+- Billboards: 5m
+- Small buttons: 1m
+
+**Setup:**
+```csharp
+public class Billboard : InteractableBase
+{
+    void Awake()
+    {
+        promptText = "Read Billboard";
+        customRange = 5f; // Readable from 5m away
+    }
+}
+
+public class SmallButton : InteractableBase
+{
+    void Awake()
+    {
+        promptText = "Press Button";
+        customRange = 1.5f; // Must be close
+    }
+}
+```
+
+Leave `customRange = 0` to use module default (3m).
+
+---
+
+### Priority System
+
+When multiple interactables are at the same distance, priority determines which is selected.
+
+**Use cases:**
+- Door vs nearby pickup → Door wins (higher priority)
+- Quest NPC vs vendor → Quest NPC wins
+- Important items vs clutter
+
+**Setup:**
+```csharp
+public class QuestDoor : InteractableBase
+{
+    void Awake()
+    {
+        promptText = "Enter Boss Room";
+        priority = 10; // High priority
+    }
+}
+
+public class CommonPickup : InteractableBase
+{
+    void Awake()
+    {
+        promptText = "Pick up Coin";
+        priority = 0; // Default priority
+    }
+}
+```
+
+**Sorting:**
+1. Priority (descending) - higher = better
+2. Distance (ascending) - closer = better
+
+---
+
+### Cycling Through Multiple Interactables
+
+When multiple interactables are in range, press **Q** to cycle between them.
+
+**How it works:**
+- System always defaults to **closest** (priority-aware)
+- Press **Q** to cycle to next in sorted list
+- Wraps around (last → first)
+- UI shows count ("2/5") and hint ("Q to cycle")
+
+**Gizmos:**
+- **Green line**: Current focused target
+- **Gray lines**: Other valid targets
+
+**Access from code:**
+```csharp
+interactionModule.CycleNext();      // Manual cycle
+interactionModule.CyclePrevious();  // Cycle backwards (not bound by default)
+int count = interactionModule.GetInteractableCount(); // How many in range
+```
+
+---
+
+### Visual Feedback with OnFocused/OnUnfocused
+
+Add visual effects when player looks at interactables.
+
+**Example: Highlight on Focus**
+```csharp
+public class Chest : InteractableBase
+{
+    [SerializeField] private Outline outlineEffect;
+    [SerializeField] private ParticleSystem glowParticles;
+    [SerializeField] private AudioClip focusSound;
+
+    public override void OnFocused()
+    {
+        base.OnFocused(); // Fires EventManager event if configured
+
+        outlineEffect.enabled = true;
+        glowParticles.Play();
+        AudioSource.PlayClipAtPoint(focusSound, transform.position, 0.5f);
+    }
+
+    public override void OnUnfocused()
+    {
+        base.OnUnfocused(); // Fires EventManager event if configured
+
+        outlineEffect.enabled = false;
+        glowParticles.Stop();
+    }
+}
+```
+
+**Common uses:**
+- Outline shaders
+- Glow effects
+- Particle systems
+- Audio cues
+- Rotate/bob animations
+- UI markers
+
+---
+
+### EventManager Integration
+
+Connect interactions to your global event system without writing code.
+
+**Setup in Inspector:**
+1. Add interactable to GameObject
+2. Set event names:
+   - `Event On Interact`: "ChestOpened"
+   - `Event On Focused`: "ChestFocused"
+   - `Event On Unfocused`: "ChestUnfocused"
+
+**Listen elsewhere:**
+```csharp
+using MistInteractive.ThirdPerson.Utils;
+
+EventManager.StartListening("ChestOpened", OnChestOpened);
+EventManager.StartListening("ChestFocused", OnChestFocused);
+
+void OnChestOpened()
+{
+    // Award achievement, update quest, etc.
+}
+
+void OnChestFocused()
+{
+    // Show tooltip, play sound, etc.
+}
+```
+
+**From code:**
+```csharp
+public override void Interact(Transform interactor)
+{
+    OpenChest();
+    FireInteractionEvent(); // Fires eventOnInteract through EventManager
+}
+```
+
+**Advantages:**
+- Decouple systems
+- No direct references needed
+- Designer-friendly (set in Inspector)
+- Works across scenes
 
 ---
 

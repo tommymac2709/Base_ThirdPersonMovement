@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace MistInteractive.ThirdPerson.Interaction
@@ -7,7 +8,7 @@ namespace MistInteractive.ThirdPerson.Interaction
     /// <summary>
     /// Component that detects interactable objects in the player's vicinity.
     /// Uses sphere overlap with forward-facing angle filtering.
-    /// Automatically finds the closest valid interactable and notifies the module of changes.
+    /// Supports custom ranges, priorities, and cycling through multiple targets.
     /// </summary>
     public class InteractionDetector : MonoBehaviour
     {
@@ -23,14 +24,32 @@ namespace MistInteractive.ThirdPerson.Interaction
         #region Private Fields
 
         private Transform playerTransform;
-        private float range;
+        private float defaultRange;
         private float angle;
         private LayerMask layers;
         private bool isActive = true;
 
         private IInteractable currentInteractable;
+        private int currentCycleIndex = 0;
         private readonly Collider[] overlapResults = new Collider[32]; // Reused buffer
-        private readonly List<IInteractable> validInteractables = new List<IInteractable>(32);
+        private readonly List<InteractableData> sortedInteractables = new List<InteractableData>(32);
+
+        /// <summary>
+        /// Helper struct to store interactable with its distance and priority for sorting.
+        /// </summary>
+        private struct InteractableData
+        {
+            public IInteractable Interactable;
+            public float Distance;
+            public int Priority;
+
+            public InteractableData(IInteractable interactable, float distance, int priority)
+            {
+                Interactable = interactable;
+                Distance = distance;
+                Priority = priority;
+            }
+        }
 
         #endregion
 
@@ -42,7 +61,7 @@ namespace MistInteractive.ThirdPerson.Interaction
         public void Initialize(Player.PlayerInteractionModule module, Transform player, float detectionRange, float detectionAngle, LayerMask detectionLayers)
         {
             playerTransform = player;
-            range = detectionRange;
+            defaultRange = detectionRange;
             angle = detectionAngle;
             layers = detectionLayers;
         }
@@ -56,12 +75,18 @@ namespace MistInteractive.ThirdPerson.Interaction
             if (!isActive || playerTransform == null)
                 return;
 
-            IInteractable newInteractable = DetectInteractable();
+            DetectAllInteractables();
+
+            // Get the top interactable (closest, highest priority)
+            IInteractable newInteractable = sortedInteractables.Count > 0
+                ? sortedInteractables[0].Interactable
+                : null;
 
             // Only fire event if the interactable has changed
             if (newInteractable != currentInteractable)
             {
                 currentInteractable = newInteractable;
+                currentCycleIndex = 0; // Reset cycle index when auto-selecting closest
                 OnDetectedInteractableChanged?.Invoke(currentInteractable);
             }
         }
@@ -71,15 +96,17 @@ namespace MistInteractive.ThirdPerson.Interaction
         #region Detection Logic
 
         /// <summary>
-        /// Performs detection and returns the closest valid interactable.
+        /// Performs detection and populates sorted list of all valid interactables.
         /// </summary>
-        /// <returns>The closest interactable, or null if none found.</returns>
-        private IInteractable DetectInteractable()
+        private void DetectAllInteractables()
         {
-            validInteractables.Clear();
+            sortedInteractables.Clear();
 
-            // Perform sphere overlap
-            int hitCount = Physics.OverlapSphereNonAlloc(playerTransform.position, range, overlapResults, layers);
+            // Use the maximum possible range from all interactables
+            float maxRange = defaultRange;
+
+            // Perform sphere overlap with default range (we'll filter by custom ranges afterward)
+            int hitCount = Physics.OverlapSphereNonAlloc(playerTransform.position, maxRange * 2f, overlapResults, layers);
 
             // Filter and collect valid interactables
             for (int i = 0; i < hitCount; i++)
@@ -94,15 +121,35 @@ namespace MistInteractive.ThirdPerson.Interaction
                 if (interactable is MonoBehaviour mb && !mb.isActiveAndEnabled)
                     continue;
 
-                // Check if within forward-facing cone
-                if (!IsInDetectionCone(interactable.GetTransform()))
+                Transform targetTransform = interactable.GetTransform();
+                float distance = Vector3.Distance(playerTransform.position, targetTransform.position);
+
+                // Get custom range or use default
+                float effectiveRange = interactable.GetCustomRange() ?? defaultRange;
+
+                // Check if within range
+                if (distance > effectiveRange)
                     continue;
 
-                validInteractables.Add(interactable);
+                // Check if within forward-facing cone
+                if (!IsInDetectionCone(targetTransform))
+                    continue;
+
+                int priority = interactable.GetPriority();
+                sortedInteractables.Add(new InteractableData(interactable, distance, priority));
             }
 
-            // Find closest interactable
-            return FindClosestInteractable();
+            // Sort by priority (descending), then by distance (ascending)
+            sortedInteractables.Sort((a, b) =>
+            {
+                // First compare by priority (higher priority wins)
+                int priorityCompare = b.Priority.CompareTo(a.Priority);
+                if (priorityCompare != 0)
+                    return priorityCompare;
+
+                // If priority is equal, compare by distance (closer wins)
+                return a.Distance.CompareTo(b.Distance);
+            });
         }
 
         /// <summary>
@@ -117,28 +164,72 @@ namespace MistInteractive.ThirdPerson.Interaction
             return dotProduct >= requiredDot;
         }
 
+        #endregion
+
+        #region Cycling
+
         /// <summary>
-        /// Finds the closest interactable from the valid list.
+        /// Cycles to the next interactable in the sorted list.
+        /// Wraps around to the first when reaching the end.
         /// </summary>
-        private IInteractable FindClosestInteractable()
+        public void CycleNext()
         {
-            if (validInteractables.Count == 0)
-                return null;
+            if (sortedInteractables.Count == 0)
+                return;
 
-            IInteractable closest = null;
-            float closestDistanceSqr = float.MaxValue;
-
-            foreach (var interactable in validInteractables)
+            if (sortedInteractables.Count == 1)
             {
-                float distanceSqr = (interactable.GetTransform().position - playerTransform.position).sqrMagnitude;
-                if (distanceSqr < closestDistanceSqr)
-                {
-                    closestDistanceSqr = distanceSqr;
-                    closest = interactable;
-                }
+                // Only one interactable, no need to cycle
+                return;
             }
 
-            return closest;
+            // Move to next index
+            currentCycleIndex = (currentCycleIndex + 1) % sortedInteractables.Count;
+
+            // Update current interactable
+            IInteractable newInteractable = sortedInteractables[currentCycleIndex].Interactable;
+            if (newInteractable != currentInteractable)
+            {
+                currentInteractable = newInteractable;
+                OnDetectedInteractableChanged?.Invoke(currentInteractable);
+            }
+        }
+
+        /// <summary>
+        /// Cycles to the previous interactable in the sorted list.
+        /// Wraps around to the last when reaching the beginning.
+        /// </summary>
+        public void CyclePrevious()
+        {
+            if (sortedInteractables.Count == 0)
+                return;
+
+            if (sortedInteractables.Count == 1)
+            {
+                // Only one interactable, no need to cycle
+                return;
+            }
+
+            // Move to previous index
+            currentCycleIndex--;
+            if (currentCycleIndex < 0)
+                currentCycleIndex = sortedInteractables.Count - 1;
+
+            // Update current interactable
+            IInteractable newInteractable = sortedInteractables[currentCycleIndex].Interactable;
+            if (newInteractable != currentInteractable)
+            {
+                currentInteractable = newInteractable;
+                OnDetectedInteractableChanged?.Invoke(currentInteractable);
+            }
+        }
+
+        /// <summary>
+        /// Returns the number of currently valid interactables.
+        /// </summary>
+        public int GetInteractableCount()
+        {
+            return sortedInteractables.Count;
         }
 
         #endregion
@@ -150,7 +241,7 @@ namespace MistInteractive.ThirdPerson.Interaction
         /// </summary>
         public void SetRange(float newRange)
         {
-            range = Mathf.Max(0f, newRange);
+            defaultRange = Mathf.Max(0f, newRange);
         }
 
         /// <summary>
@@ -172,6 +263,7 @@ namespace MistInteractive.ThirdPerson.Interaction
             if (!active && currentInteractable != null)
             {
                 currentInteractable = null;
+                currentCycleIndex = 0;
                 OnDetectedInteractableChanged?.Invoke(null);
             }
         }
@@ -188,24 +280,35 @@ namespace MistInteractive.ThirdPerson.Interaction
             if (playerTransform == null)
                 return;
 
-            // Draw detection sphere
+            // Draw detection sphere (default range)
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(playerTransform.position, range);
+            Gizmos.DrawWireSphere(playerTransform.position, defaultRange);
 
             // Draw detection cone
             Gizmos.color = Color.cyan;
-            Vector3 forward = playerTransform.forward * range;
+            Vector3 forward = playerTransform.forward * defaultRange;
             Vector3 rightBoundary = Quaternion.Euler(0, angle, 0) * forward;
             Vector3 leftBoundary = Quaternion.Euler(0, -angle, 0) * forward;
 
             Gizmos.DrawRay(playerTransform.position, rightBoundary);
             Gizmos.DrawRay(playerTransform.position, leftBoundary);
 
-            // Draw current interactable
+            // Draw current interactable (green)
             if (currentInteractable != null)
             {
                 Gizmos.color = Color.green;
                 Gizmos.DrawLine(playerTransform.position, currentInteractable.GetTransform().position);
+                Gizmos.DrawWireSphere(currentInteractable.GetTransform().position, 0.3f);
+            }
+
+            // Draw other valid interactables (gray)
+            Gizmos.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            foreach (var data in sortedInteractables)
+            {
+                if (data.Interactable != currentInteractable)
+                {
+                    Gizmos.DrawLine(playerTransform.position, data.Interactable.GetTransform().position);
+                }
             }
         }
 

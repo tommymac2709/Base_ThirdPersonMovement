@@ -20,6 +20,7 @@ namespace MistInteractive.ThirdPerson.Control
         public event Action JumpEvent;
         public event Action DodgeEvent;
         public event Action InteractEvent;
+        public event Action CycleInteractableEvent;
 
         public Controls controls;
 
@@ -102,6 +103,12 @@ namespace MistInteractive.ThirdPerson.Control
         {
             if (!context.performed) return;
             InteractEvent?.Invoke();
+        }
+
+        public void OnCycleInteractable(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+            CycleInteractableEvent?.Invoke();
         }
     }
 

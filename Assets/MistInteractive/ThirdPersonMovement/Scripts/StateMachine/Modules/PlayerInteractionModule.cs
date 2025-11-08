@@ -7,6 +7,7 @@ namespace MistInteractive.ThirdPerson.Player
     /// <summary>
     /// Module that enables interaction with objects in the game world.
     /// Handles detection, validation, and execution of interactions with IInteractable objects.
+    /// Supports instant and hold-to-interact, custom ranges, priorities, and cycling.
     /// Works independently and provides a flexible API for future modules (inventory, combat, etc.).
     /// </summary>
     [CreateAssetMenu(menuName = "MiST/Player Modules/Interaction", fileName = "InteractionModule")]
@@ -48,6 +49,11 @@ namespace MistInteractive.ThirdPerson.Player
         /// </summary>
         public event Action<IInteractable, Transform> OnInteractionPerformed;
 
+        /// <summary>
+        /// Fired every frame during a hold interaction to report progress (0-1).
+        /// </summary>
+        public event Action<float> OnHoldProgress;
+
         #endregion
 
         #region Private Fields
@@ -57,6 +63,11 @@ namespace MistInteractive.ThirdPerson.Player
         private IInteractable currentInteractable;
         private bool interactionEnabled = true;
         private Control.InputBridge inputBridge;
+
+        // Hold-to-interact state
+        private bool isHolding = false;
+        private float holdStartTime = 0f;
+        private float requiredHoldDuration = 0f;
 
         #endregion
 
@@ -100,6 +111,25 @@ namespace MistInteractive.ThirdPerson.Player
         /// </summary>
         public bool IsInteractionEnabled => interactionEnabled;
 
+        /// <summary>
+        /// Gets whether the player is currently holding the interact button for a timed interaction.
+        /// </summary>
+        public bool IsHoldingInteract => isHolding;
+
+        /// <summary>
+        /// Gets the current hold progress (0-1).
+        /// </summary>
+        public float HoldProgress
+        {
+            get
+            {
+                if (!isHolding || requiredHoldDuration <= 0f)
+                    return 0f;
+
+                return Mathf.Clamp01((Time.time - holdStartTime) / requiredHoldDuration);
+            }
+        }
+
         #endregion
 
         #region Module Lifecycle
@@ -129,10 +159,17 @@ namespace MistInteractive.ThirdPerson.Player
             if (inputBridge != null)
             {
                 inputBridge.InteractEvent += OnInteractInput;
+                inputBridge.CycleInteractableEvent += OnCycleInput;
             }
             else
             {
                 Debug.LogWarning("[PlayerInteractionModule] InputBridge not found on PlayerStateMachine. Interaction input will not work.");
+            }
+
+            // Start update coroutine for hold tracking
+            if (detectorObj.TryGetComponent<MonoBehaviour>(out var mb))
+            {
+                sm.StartCoroutine(HoldUpdateCoroutine());
             }
         }
 
@@ -145,20 +182,167 @@ namespace MistInteractive.ThirdPerson.Player
             if (inputBridge != null)
             {
                 inputBridge.InteractEvent -= OnInteractInput;
+                inputBridge.CycleInteractableEvent -= OnCycleInput;
             }
 
             if (detector != null)
             {
                 detector.OnDetectedInteractableChanged -= HandleInteractableChanged;
             }
+
+            CancelHold();
         }
+
+        #endregion
+
+        #region Input Handling
 
         /// <summary>
         /// Called when the interact input is pressed.
+        /// Starts instant or hold interaction based on interactable's duration.
         /// </summary>
         private void OnInteractInput()
         {
-            TryInteract();
+            if (!interactionEnabled || currentInteractable == null)
+                return;
+
+            if (!currentInteractable.CanInteract(cachedStateMachine.transform))
+                return;
+
+            // Get the required hold duration
+            requiredHoldDuration = currentInteractable.GetInteractionDuration();
+
+            if (requiredHoldDuration <= 0f)
+            {
+                // Instant interaction
+                PerformInteraction();
+            }
+            else
+            {
+                // Start hold interaction
+                StartHold();
+            }
+        }
+
+        /// <summary>
+        /// Called when the cycle interactable input is pressed.
+        /// </summary>
+        private void OnCycleInput()
+        {
+            CycleNext();
+        }
+
+        #endregion
+
+        #region Hold-to-Interact Logic
+
+        /// <summary>
+        /// Starts a hold interaction.
+        /// </summary>
+        private void StartHold()
+        {
+            isHolding = true;
+            holdStartTime = Time.time;
+        }
+
+        /// <summary>
+        /// Cancels the current hold interaction.
+        /// </summary>
+        private void CancelHold()
+        {
+            if (isHolding)
+            {
+                isHolding = false;
+                OnHoldProgress?.Invoke(0f);
+            }
+        }
+
+        /// <summary>
+        /// Coroutine that tracks hold progress and completes interaction when time is reached.
+        /// </summary>
+        private System.Collections.IEnumerator HoldUpdateCoroutine()
+        {
+            while (true)
+            {
+                if (isHolding)
+                {
+                    // Check if interact button is still held
+                    bool stillHolding = inputBridge != null && inputBridge.controls.Player.Interact.IsPressed();
+
+                    if (!stillHolding)
+                    {
+                        // Button released - cancel hold
+                        CancelHold();
+                    }
+                    else if (currentInteractable == null)
+                    {
+                        // Lost target - cancel hold
+                        CancelHold();
+                    }
+                    else
+                    {
+                        // Update progress
+                        float progress = HoldProgress;
+                        OnHoldProgress?.Invoke(progress);
+
+                        // Check if hold is complete
+                        if (progress >= 1f)
+                        {
+                            PerformInteraction();
+                            isHolding = false;
+                            OnHoldProgress?.Invoke(0f);
+                        }
+                    }
+                }
+
+                yield return null;
+            }
+        }
+
+        /// <summary>
+        /// Performs the actual interaction.
+        /// </summary>
+        private void PerformInteraction()
+        {
+            if (currentInteractable != null)
+            {
+                currentInteractable.Interact(cachedStateMachine.transform);
+                OnInteractionPerformed?.Invoke(currentInteractable, cachedStateMachine.transform);
+            }
+        }
+
+        #endregion
+
+        #region Cycling
+
+        /// <summary>
+        /// Cycles to the next valid interactable.
+        /// </summary>
+        public void CycleNext()
+        {
+            if (detector != null)
+            {
+                detector.CycleNext();
+            }
+        }
+
+        /// <summary>
+        /// Cycles to the previous valid interactable.
+        /// </summary>
+        public void CyclePrevious()
+        {
+            if (detector != null)
+            {
+                detector.CyclePrevious();
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of currently valid interactables in range.
+        /// </summary>
+        public int GetInteractableCount()
+        {
+            return detector != null ? detector.GetInteractableCount() : 0;
         }
 
         #endregion
@@ -176,8 +360,9 @@ namespace MistInteractive.ThirdPerson.Player
 
         /// <summary>
         /// Attempts to interact with the currently detected interactable.
+        /// For manual triggering (not from input).
         /// </summary>
-        /// <returns>True if an interaction was performed, false otherwise.</returns>
+        /// <returns>True if an interaction was started, false otherwise.</returns>
         public bool TryInteract()
         {
             if (!interactionEnabled || currentInteractable == null)
@@ -186,9 +371,18 @@ namespace MistInteractive.ThirdPerson.Player
             if (!currentInteractable.CanInteract(cachedStateMachine.transform))
                 return false;
 
-            currentInteractable.Interact(cachedStateMachine.transform);
-            OnInteractionPerformed?.Invoke(currentInteractable, cachedStateMachine.transform);
-            return true;
+            requiredHoldDuration = currentInteractable.GetInteractionDuration();
+
+            if (requiredHoldDuration <= 0f)
+            {
+                PerformInteraction();
+                return true;
+            }
+            else
+            {
+                StartHold();
+                return true;
+            }
         }
 
         /// <summary>
@@ -199,6 +393,11 @@ namespace MistInteractive.ThirdPerson.Player
         public void SetInteractionEnabled(bool enabled)
         {
             interactionEnabled = enabled;
+
+            if (!enabled)
+            {
+                CancelHold();
+            }
         }
 
         /// <summary>
@@ -210,6 +409,11 @@ namespace MistInteractive.ThirdPerson.Player
         {
             if (detector != null)
                 detector.SetActive(active);
+
+            if (!active)
+            {
+                CancelHold();
+            }
         }
 
         #endregion
@@ -221,18 +425,24 @@ namespace MistInteractive.ThirdPerson.Player
         /// </summary>
         internal void HandleInteractableChanged(IInteractable newInteractable)
         {
-            if (currentInteractable != newInteractable)
+            // Call OnUnfocused on old interactable
+            if (currentInteractable != null && currentInteractable != newInteractable)
             {
-                if (newInteractable != null)
-                {
-                    currentInteractable = newInteractable;
-                    OnInteractableDetected?.Invoke(currentInteractable);
-                }
-                else
-                {
-                    currentInteractable = null;
-                    OnInteractableLost?.Invoke();
-                }
+                currentInteractable.OnUnfocused();
+                CancelHold(); // Cancel any ongoing hold
+            }
+
+            currentInteractable = newInteractable;
+
+            // Call OnFocused on new interactable
+            if (currentInteractable != null)
+            {
+                currentInteractable.OnFocused();
+                OnInteractableDetected?.Invoke(currentInteractable);
+            }
+            else
+            {
+                OnInteractableLost?.Invoke();
             }
         }
 

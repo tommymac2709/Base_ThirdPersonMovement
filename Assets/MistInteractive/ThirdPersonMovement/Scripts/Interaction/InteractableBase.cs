@@ -1,4 +1,5 @@
 using UnityEngine;
+using MistInteractive.ThirdPerson.Utils;
 
 namespace MistInteractive.ThirdPerson.Interaction
 {
@@ -24,6 +25,26 @@ namespace MistInteractive.ThirdPerson.Interaction
 
         [Tooltip("Whether this interactable is currently enabled")]
         [SerializeField] protected bool enabled = true;
+
+        [Header("Advanced Settings")]
+        [Tooltip("Custom interaction range (leave 0 to use module default)")]
+        [SerializeField] protected float customRange = 0f;
+
+        [Tooltip("Hold duration in seconds (0 = instant, > 0 = hold to interact)")]
+        [SerializeField] protected float interactionDuration = 0f;
+
+        [Tooltip("Priority when multiple interactables are at same distance (higher = preferred)")]
+        [SerializeField] protected int priority = 0;
+
+        [Header("Event Manager Integration")]
+        [Tooltip("Optional event name to fire when interacted with (uses EventManager)")]
+        [SerializeField] protected string eventOnInteract = "";
+
+        [Tooltip("Optional event name to fire when focused")]
+        [SerializeField] protected string eventOnFocused = "";
+
+        [Tooltip("Optional event name to fire when unfocused")]
+        [SerializeField] protected string eventOnUnfocused = "";
 
         /// <summary>
         /// Called when the player interacts with this object.
@@ -81,6 +102,70 @@ namespace MistInteractive.ThirdPerson.Interaction
         public virtual void SetPromptText(string text)
         {
             promptText = text;
+        }
+
+        /// <summary>
+        /// Returns a custom interaction range, or null to use module default.
+        /// </summary>
+        public virtual float? GetCustomRange()
+        {
+            return customRange > 0f ? customRange : (float?)null;
+        }
+
+        /// <summary>
+        /// Returns the hold duration for this interaction.
+        /// 0 = instant, > 0 = hold to interact.
+        /// </summary>
+        public virtual float GetInteractionDuration()
+        {
+            return interactionDuration;
+        }
+
+        /// <summary>
+        /// Returns the priority of this interactable.
+        /// Higher values are preferred when multiple are at the same distance.
+        /// </summary>
+        public virtual int GetPriority()
+        {
+            return priority;
+        }
+
+        /// <summary>
+        /// Called when this interactable becomes focused.
+        /// Override to add visual effects (highlighting, particles, etc.).
+        /// </summary>
+        public virtual void OnFocused()
+        {
+            // Fire EventManager event if configured
+            if (!string.IsNullOrWhiteSpace(eventOnFocused))
+            {
+                EventManager.TriggerEvent(eventOnFocused);
+            }
+        }
+
+        /// <summary>
+        /// Called when this interactable loses focus.
+        /// Override to remove visual effects.
+        /// </summary>
+        public virtual void OnUnfocused()
+        {
+            // Fire EventManager event if configured
+            if (!string.IsNullOrWhiteSpace(eventOnUnfocused))
+            {
+                EventManager.TriggerEvent(eventOnUnfocused);
+            }
+        }
+
+        /// <summary>
+        /// Helper method to fire interaction event through EventManager.
+        /// Call this from your Interact() override if you want to use EventManager.
+        /// </summary>
+        protected void FireInteractionEvent()
+        {
+            if (!string.IsNullOrWhiteSpace(eventOnInteract))
+            {
+                EventManager.TriggerEvent(eventOnInteract);
+            }
         }
     }
 }

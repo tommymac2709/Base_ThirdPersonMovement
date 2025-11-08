@@ -144,6 +144,15 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""CycleInteractable"",
+                    ""type"": ""Button"",
+                    ""id"": ""e5a7c2d4-3f8b-4e9a-a1b2-c3d4e5f6a7b8"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -347,7 +356,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""c3f8b9a2-1e5d-4c7a-9f2b-8d6e3a4c5f7g"",
+                    ""id"": ""c3f8b9a2-1e5d-4c7a-9f2b-8d6e3a4c5f70"",
                     ""path"": ""<Keyboard>/e"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -358,12 +367,34 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""d4g9c0b3-2f6e-5d8b-0g3c-9e7f4b5d6h8i"",
+                    ""id"": ""d4f9c0b3-2f6e-5d8b-0f3c-9e7f4b5d6a8e"",
                     ""path"": ""<Gamepad>/buttonWest"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
                     ""action"": ""Interact"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f6b8d3e5-4a9c-5f0b-b2c3-d4e5f6a7b8c9"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CycleInteractable"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a7c9e4f6-5b0d-6a1e-c3d4-e5f6a7b8c9d0"",
+                    ""path"": ""<Gamepad>/dpad/up"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""CycleInteractable"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -408,6 +439,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         m_Player_Sprint = m_Player.FindAction("Sprint", throwIfNotFound: true);
         m_Player_Dodge = m_Player.FindAction("Dodge", throwIfNotFound: true);
         m_Player_Interact = m_Player.FindAction("Interact", throwIfNotFound: true);
+        m_Player_CycleInteractable = m_Player.FindAction("CycleInteractable", throwIfNotFound: true);
     }
 
     ~@Controls()
@@ -494,6 +526,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Sprint;
     private readonly InputAction m_Player_Dodge;
     private readonly InputAction m_Player_Interact;
+    private readonly InputAction m_Player_CycleInteractable;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -529,6 +562,10 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Interact".
         /// </summary>
         public InputAction @Interact => m_Wrapper.m_Player_Interact;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/CycleInteractable".
+        /// </summary>
+        public InputAction @CycleInteractable => m_Wrapper.m_Player_CycleInteractable;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -573,6 +610,9 @@ public partial class @Controls: IInputActionCollection2, IDisposable
             @Interact.started += instance.OnInteract;
             @Interact.performed += instance.OnInteract;
             @Interact.canceled += instance.OnInteract;
+            @CycleInteractable.started += instance.OnCycleInteractable;
+            @CycleInteractable.performed += instance.OnCycleInteractable;
+            @CycleInteractable.canceled += instance.OnCycleInteractable;
         }
 
         /// <summary>
@@ -602,6 +642,9 @@ public partial class @Controls: IInputActionCollection2, IDisposable
             @Interact.started -= instance.OnInteract;
             @Interact.performed -= instance.OnInteract;
             @Interact.canceled -= instance.OnInteract;
+            @CycleInteractable.started -= instance.OnCycleInteractable;
+            @CycleInteractable.performed -= instance.OnCycleInteractable;
+            @CycleInteractable.canceled -= instance.OnCycleInteractable;
         }
 
         /// <summary>
@@ -710,5 +753,12 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnInteract(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "CycleInteractable" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCycleInteractable(InputAction.CallbackContext context);
     }
 }

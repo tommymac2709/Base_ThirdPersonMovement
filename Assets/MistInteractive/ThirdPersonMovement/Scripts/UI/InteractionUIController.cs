@@ -9,6 +9,7 @@ namespace MistInteractive.ThirdPersonMovement.UI
     /// <summary>
     /// UI controller for displaying interaction prompts to the player.
     /// Automatically subscribes to the PlayerInteractionModule and updates based on detected interactables.
+    /// Supports hold-to-interact progress and cycling through multiple interactables.
     /// Gracefully handles missing module - disables itself if module not found.
     /// </summary>
     public class InteractionUIController : MonoBehaviour
@@ -25,6 +26,23 @@ namespace MistInteractive.ThirdPersonMovement.UI
 
         [Tooltip("Optional icon image")]
         [SerializeField] private Image iconImage;
+
+        [Header("Hold-to-Interact UI (Optional)")]
+        [Tooltip("Optional slider showing hold progress (0-1)")]
+        [SerializeField] private Slider holdProgressSlider;
+
+        [Tooltip("Optional text showing hold percentage (e.g., '75%')")]
+        [SerializeField] private TextMeshProUGUI holdProgressText;
+
+        [Tooltip("Optional container for hold progress UI elements")]
+        [SerializeField] private GameObject holdProgressContainer;
+
+        [Header("Cycling UI (Optional)")]
+        [Tooltip("Optional text showing cycle count (e.g., '2/5')")]
+        [SerializeField] private TextMeshProUGUI cycleCountText;
+
+        [Tooltip("Optional key hint for cycling (e.g., 'Q to cycle')")]
+        [SerializeField] private TextMeshProUGUI cycleHintText;
 
         [Header("Visual Feedback")]
         [Tooltip("Color used when interaction is disabled")]
@@ -65,10 +83,14 @@ namespace MistInteractive.ThirdPersonMovement.UI
             // Subscribe to module events
             interactionModule.OnInteractableDetected += OnInteractableDetected;
             interactionModule.OnInteractableLost += OnInteractableLost;
+            interactionModule.OnHoldProgress += OnHoldProgressUpdate;
 
             // Initialize UI as hidden
             if (container != null)
                 container.SetActive(false);
+
+            if (holdProgressContainer != null)
+                holdProgressContainer.SetActive(false);
 
             Debug.Log("[InteractionUIController] Initialized successfully.");
         }
@@ -80,6 +102,7 @@ namespace MistInteractive.ThirdPersonMovement.UI
             {
                 interactionModule.OnInteractableDetected -= OnInteractableDetected;
                 interactionModule.OnInteractableLost -= OnInteractableLost;
+                interactionModule.OnHoldProgress -= OnHoldProgressUpdate;
             }
         }
 
@@ -89,6 +112,7 @@ namespace MistInteractive.ThirdPersonMovement.UI
             if (currentInteractable != null)
             {
                 UpdateUI(currentInteractable);
+                UpdateCycleUI();
             }
         }
 
@@ -96,6 +120,7 @@ namespace MistInteractive.ThirdPersonMovement.UI
         {
             currentInteractable = interactable;
             UpdateUI(interactable);
+            UpdateCycleUI();
 
             if (container != null)
                 container.SetActive(true);
@@ -107,6 +132,37 @@ namespace MistInteractive.ThirdPersonMovement.UI
 
             if (container != null)
                 container.SetActive(false);
+
+            if (holdProgressContainer != null)
+                holdProgressContainer.SetActive(false);
+        }
+
+        private void OnHoldProgressUpdate(float progress)
+        {
+            // Show/hide hold progress UI
+            if (holdProgressContainer != null)
+            {
+                holdProgressContainer.SetActive(progress > 0f);
+            }
+
+            // Update slider
+            if (holdProgressSlider != null)
+            {
+                holdProgressSlider.value = progress;
+            }
+
+            // Update text
+            if (holdProgressText != null)
+            {
+                if (progress > 0f)
+                {
+                    holdProgressText.text = $"{Mathf.RoundToInt(progress * 100)}%";
+                }
+                else
+                {
+                    holdProgressText.text = "";
+                }
+            }
         }
 
         private void UpdateUI(IInteractable interactable)
@@ -136,6 +192,13 @@ namespace MistInteractive.ThirdPersonMovement.UI
                     ? interactionModule.InteractKeyName
                     : uiData.buttonText;
 
+                // Add "Hold" prefix if this is a hold interaction
+                float duration = interactable.GetInteractionDuration();
+                if (duration > 0f)
+                {
+                    displayButtonText = $"Hold {displayButtonText}";
+                }
+
                 buttonText.text = displayButtonText;
                 buttonText.color = canInteract ? Color.white : disabledColor;
             }
@@ -164,6 +227,39 @@ namespace MistInteractive.ThirdPersonMovement.UI
             }
         }
 
+        private void UpdateCycleUI()
+        {
+            int totalCount = interactionModule.GetInteractableCount();
+
+            // Update cycle count text (e.g., "1/3")
+            if (cycleCountText != null)
+            {
+                if (totalCount > 1)
+                {
+                    cycleCountText.text = $"1/{totalCount}"; // Always show 1 as we're focused on the primary
+                    cycleCountText.gameObject.SetActive(true);
+                }
+                else
+                {
+                    cycleCountText.gameObject.SetActive(false);
+                }
+            }
+
+            // Update cycle hint text
+            if (cycleHintText != null)
+            {
+                if (totalCount > 1)
+                {
+                    cycleHintText.text = "Q to cycle";
+                    cycleHintText.gameObject.SetActive(true);
+                }
+                else
+                {
+                    cycleHintText.gameObject.SetActive(false);
+                }
+            }
+        }
+
         #region Context Menu Tests
 
         [ContextMenu("Toggle Interaction")]
@@ -185,6 +281,16 @@ namespace MistInteractive.ThirdPersonMovement.UI
                 // This will disable detection entirely
                 interactionModule.SetDetectionActive(false);
                 Debug.Log("[InteractionUIController] Detection disabled");
+            }
+        }
+
+        [ContextMenu("Cycle Next")]
+        void TestCycleNext()
+        {
+            if (interactionModule != null)
+            {
+                interactionModule.CycleNext();
+                Debug.Log($"[InteractionUIController] Cycled to next interactable (total: {interactionModule.GetInteractableCount()})");
             }
         }
 
