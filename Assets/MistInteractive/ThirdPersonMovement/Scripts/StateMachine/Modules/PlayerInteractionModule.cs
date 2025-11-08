@@ -345,6 +345,14 @@ namespace MistInteractive.ThirdPerson.Player
             return detector != null ? detector.GetInteractableCount() : 0;
         }
 
+        /// <summary>
+        /// Gets the current cycle index (0-based).
+        /// </summary>
+        public int GetCurrentCycleIndex()
+        {
+            return detector != null ? detector.GetCurrentCycleIndex() : 0;
+        }
+
         #endregion
 
         #region Public API

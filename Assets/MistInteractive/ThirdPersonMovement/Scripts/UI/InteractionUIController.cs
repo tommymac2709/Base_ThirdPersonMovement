@@ -230,13 +230,14 @@ namespace MistInteractive.ThirdPersonMovement.UI
         private void UpdateCycleUI()
         {
             int totalCount = interactionModule.GetInteractableCount();
+            int currentIndex = interactionModule.GetCurrentCycleIndex();
 
             // Update cycle count text (e.g., "1/3")
             if (cycleCountText != null)
             {
                 if (totalCount > 1)
                 {
-                    cycleCountText.text = $"1/{totalCount}"; // Always show 1 as we're focused on the primary
+                    cycleCountText.text = $"{currentIndex + 1}/{totalCount}"; // +1 to display 1-based index
                     cycleCountText.gameObject.SetActive(true);
                 }
                 else

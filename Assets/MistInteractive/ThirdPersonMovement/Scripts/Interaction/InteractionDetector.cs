@@ -77,16 +77,19 @@ namespace MistInteractive.ThirdPerson.Interaction
 
             DetectAllInteractables();
 
-            // Get the top interactable (closest, highest priority)
+            // Clamp cycle index to valid range
+            if (currentCycleIndex >= sortedInteractables.Count)
+                currentCycleIndex = 0;
+
+            // Get the interactable at current cycle index
             IInteractable newInteractable = sortedInteractables.Count > 0
-                ? sortedInteractables[0].Interactable
+                ? sortedInteractables[currentCycleIndex].Interactable
                 : null;
 
             // Only fire event if the interactable has changed
             if (newInteractable != currentInteractable)
             {
                 currentInteractable = newInteractable;
-                currentCycleIndex = 0; // Reset cycle index when auto-selecting closest
                 OnDetectedInteractableChanged?.Invoke(currentInteractable);
             }
         }
@@ -230,6 +233,14 @@ namespace MistInteractive.ThirdPerson.Interaction
         public int GetInteractableCount()
         {
             return sortedInteractables.Count;
+        }
+
+        /// <summary>
+        /// Returns the current cycle index (0-based).
+        /// </summary>
+        public int GetCurrentCycleIndex()
+        {
+            return currentCycleIndex;
         }
 
         #endregion
